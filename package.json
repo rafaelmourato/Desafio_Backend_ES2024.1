@@ -1,0 +1,24 @@
+{
+  "name": "desafio_backend_es2024.1",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafaelmourato/Desafio_Backend_ES2024.1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rafaelmourato/Desafio_Backend_ES2024.1/issues"
+  },
+  "homepage": "https://github.com/rafaelmourato/Desafio_Backend_ES2024.1#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
