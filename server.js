@@ -1,6 +1,7 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
 
+
 const prisma = new PrismaClient()
 const app = express()
 app.use(express.json())
@@ -18,10 +19,13 @@ app.post('/tarefas', async (req, res) => {
     try {
         const { titulo, descricao, status, data_vencimento } = req.body
 
-        if (!titulo || !status) {
+        if (!titulo) {
             return res.status(400).json({ error: 'Título e status são obrigatórios' })
         }
-        
+        if (!status) {
+            return res.status(400).json({ error: 'Status são obrigatórios e limitados a: pendente, realizando e concluida' })
+        }
+
         if (!validarStatus(status)) {
             return res.status(400).json({ error: 'Status inválido. Os valores válidos são: pendente, realizando, concluida.' })
         }
@@ -74,6 +78,7 @@ app.put('/tarefas/:id', async (req, res) => {
     try {
         const { id } = req.params
         const { titulo, descricao, status, data_vencimento } = req.body
+        
 
         const tarefaExistente = await prisma.tarefa.findUnique({ where: { id } })
 
@@ -97,10 +102,14 @@ app.put('/tarefas/:id', async (req, res) => {
 app.delete('/tarefas/:id', async (req, res) => {
     try {
         const { id } = req.params
+        if (!isUuid(id)) {
+            return res.status(400).json({ error: 'ID inválido' })
+        }
 
         const tarefaExistente = await prisma.tarefa.findUnique({ where: { id } })
+        console.log(tarefaExistente)
 
-        if (!tarefaExistente) {
+        if (tarefaExistente == null) {
             return res.status(404).json({ error: 'Tarefa não encontrada' })
         }
 
