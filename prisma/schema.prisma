@@ -14,14 +14,14 @@ datasource db {
 }
 
 model Tarefa {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  titulo         String  
-  descricao      String?  
-  status         StatusTarefa   @default(PENDENTE) 
-  dataVencimento DateTime?
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  titulo          String  
+  descricao       String?  
+  status          StatusTarefa   @default(pendente) 
+  data_vencimento String?
 }
 enum StatusTarefa {
-  PENDENTE
-  REALIZANDO
-  CONCLUIDA
+  pendente
+  realizando
+  concluida
 }

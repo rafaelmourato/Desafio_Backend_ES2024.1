@@ -2,73 +2,115 @@ import express from 'express'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
-
 const app = express()
 app.use(express.json())
 
-app.post('/tarefas', async (req,res) => {
+// Status válidos
+const STATUS_VALIDOS = ['pendente', 'realizando', 'concluida']
 
-    await prisma.tarefa.create({
-        data: {
-            titulo: req.body.titulo,
-            descricao: req.body.descricao,
-            status: req.body.status,
-            dataVencimento: req.body.dataVencimento
+// Função para validar status
+const validarStatus = (status) => {
+    return STATUS_VALIDOS.includes(status)
+}
+
+// Criar uma nova tarefa
+app.post('/tarefas', async (req, res) => {
+    try {
+        const { titulo, descricao, status, data_vencimento } = req.body
+
+        if (!titulo || !status) {
+            return res.status(400).json({ error: 'Título e status são obrigatórios' })
         }
-    })
-    res.status(201).json(req.body)
-})
+        
+        if (!validarStatus(status)) {
+            return res.status(400).json({ error: 'Status inválido. Os valores válidos são: pendente, realizando, concluida.' })
+        }
 
-app.get('/tarefas',async (req,res) => {
-    let tarefas = []
-    if(req.query){
-        tarefas = await prisma.tarefa.findMany({
-            where: {
-                status: req.query.status
-            }
+        const novaTarefa = await prisma.tarefa.create({
+            data: { titulo, descricao, status, data_vencimento }
         })
-    }else{
-        tarefas = await prisma.tarefa.findMany()
+
+        res.status(201).json(novaTarefa)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Erro interno do servidor' })
     }
-    res.status(200).json(tarefas)
 })
 
-app.get('/tarefas/:id',async (req,res) => {
+// Listar todas as tarefas, com filtro opcional por status
+app.get('/tarefas', async (req, res) => {
+    try {
+        const { status } = req.query
+        const tarefas = await prisma.tarefa.findMany({
+            where: status ? { status } : undefined
+        })
+        res.status(200).json(tarefas)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Erro interno do servidor' })
+    }
+})
 
-    const tarefas = await prisma.tarefa.findUnique({
-        where: {
-            id: req.params.id
+// Buscar uma tarefa pelo ID
+app.get('/tarefas/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+
+        const tarefa = await prisma.tarefa.findUnique({ where: { id } })
+
+        if (!tarefa) {
+            return res.status(404).json({ error: 'Tarefa não encontrada' })
         }
-    })
 
-    res.status(200).json(tarefas)
+        res.status(200).json(tarefa)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Erro interno do servidor' })
+    }
 })
 
+// Atualizar uma tarefa pelo ID
+app.put('/tarefas/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+        const { titulo, descricao, status, data_vencimento } = req.body
 
-app.put('/tarefas/:id', async (req,res) => {
+        const tarefaExistente = await prisma.tarefa.findUnique({ where: { id } })
 
-    await prisma.tarefa.update({
-        where: {
-            id: req.params.id
-        },
-        data: {
-            titulo: req.body.titulo,
-            descricao: req.body.descricao,
-            status: req.body.status,
-            dataVencimento: req.body.dataVencimento
+        if (!tarefaExistente) {
+            return res.status(404).json({ error: 'Tarefa não encontrada' })
         }
-    })
-    res.status(201).json(req.body)
+
+        const tarefaAtualizada = await prisma.tarefa.update({
+            where: { id },
+            data: { titulo, descricao, status, data_vencimento }
+        })
+
+        res.status(200).json(tarefaAtualizada)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Erro interno do servidor' })
+    }
 })
 
-app.delete('/tarefas/:id', async(req,res) => {
+// Deletar uma tarefa pelo ID
+app.delete('/tarefas/:id', async (req, res) => {
+    try {
+        const { id } = req.params
 
-    await prisma.tarefa.delete({
-        where: {
-            id: req.params.id
+        const tarefaExistente = await prisma.tarefa.findUnique({ where: { id } })
+
+        if (!tarefaExistente) {
+            return res.status(404).json({ error: 'Tarefa não encontrada' })
         }
-    })
-    res.status(200).json(req.body)
+
+        await prisma.tarefa.delete({ where: { id } })
+
+        res.status(200).json({ message: 'Tarefa deletada com sucesso' })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: 'Erro interno do servidor' })
+    }
 })
 
-app.listen(3000)
+app.listen(3000, () => console.log('Servidor rodando na porta 3000'))
